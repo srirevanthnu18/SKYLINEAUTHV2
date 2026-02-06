@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NEUTRON{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-text">NEUTRON</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i> <span>Overview</span>
+                </a>
+                <a href="{{ url_for('apps.index') }}" class="nav-item {% if request.endpoint and 'apps' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-mobile-alt"></i> <span>Apps</span>
+                </a>
+                <a href="{{ url_for('users.index') }}" class="nav-item {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-users"></i> <span>Users</span>
+                </a>
+                {% if session.get('role') in ['superadmin', 'admin'] %}
+                <a href="{{ url_for('resellers.index') }}" class="nav-item {% if request.endpoint and 'resellers' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-store"></i> <span>Resellers</span>
+                </a>
+                <a href="{{ url_for('packages.index') }}" class="nav-item {% if request.endpoint and 'packages' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-box"></i> <span>Packages</span>
+                </a>
+                {% endif %}
+                {% if session.get('role') == 'superadmin' %}
+                <a href="{{ url_for('admins.index') }}" class="nav-item {% if request.endpoint and 'admins' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i> <span>Admins</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('profile.index') }}" class="nav-item {% if request.endpoint and 'profile' in request.endpoint %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i> <span>Profile</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-block">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+                </div>
+                <div class="top-bar-right">
+                    <span class="user-info">
+                        <i class="fas fa-circle text-success"></i>
+                        {{ session.get('username', 'User') }}
+                        <span class="badge badge-role">{{ session.get('role', '').replace('superadmin', 'Super Admin').replace('admin', 'Admin').replace('reseller', 'Reseller') }}</span>
+                    </span>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">
+                    <span>{{ message }}</span>
+                    <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

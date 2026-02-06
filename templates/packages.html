@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}NEUTRON - Packages{% endblock %}
+{% block page_title %}Packages{% endblock %}
+
+{% block content %}
+<!-- Create Package -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-plus-circle"></i> Create Package</h3>
+    </div>
+    <form method="POST" action="{{ url_for('packages.create') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Application</label>
+                <select name="app_id" class="form-control" required>
+                    <option value="">Select App</option>
+                    {% for app in apps %}
+                    <option value="{{ app._id }}">{{ app.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Package Name</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. 30 Days, Premium" required>
+            </div>
+            <div class="form-group">
+                <label>Duration (days)</label>
+                <input type="number" name="duration_days" class="form-control" value="30" min="1" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success mt-2"><i class="fas fa-plus"></i> Create Package</button>
+    </form>
+</div>
+
+<!-- Packages List -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-box"></i> All Packages ({{ packages|length }})</h3>
+    </div>
+
+    {% if packages %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Duration</th>
+                    <th>Application</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr>
+                    <td><strong>{{ pkg.name }}</strong></td>
+                    <td>{{ pkg.duration_days }} days</td>
+                    <td class="text-muted">
+                        {% for app in apps %}
+                            {% if app._id == pkg.app_id %}{{ app.name }}{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="text-muted">{{ pkg.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('packages.delete', package_id=pkg._id) }}"
+                              onsubmit="return confirm('Delete this package?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-box"></i>
+        <p>No packages yet. Create one above.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}NEUTRON - Users & Licenses{% endblock %}
+{% block page_title %}Users & Licenses{% endblock %}
+
+{% block content %}
+<!-- Generate Licenses -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-key"></i> Generate Licenses</h3>
+    </div>
+    <form method="POST" action="{{ url_for('users.generate_licenses') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Application</label>
+                <select name="app_id" class="form-control" required>
+                    <option value="">Select App</option>
+                    {% for app in apps %}
+                    <option value="{{ app._id }}">{{ app.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Package</label>
+                <select name="package_id" class="form-control" required>
+                    <option value="">Select Package</option>
+                    {% for pkg in packages %}
+                    <option value="{{ pkg._id }}">{{ pkg.name }} ({{ pkg.duration_days }}d)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Count</label>
+                <input type="number" name="count" class="form-control" value="1" min="1" max="100">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success mt-2"><i class="fas fa-plus"></i> Generate</button>
+    </form>
+</div>
+
+<!-- Create User -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-user-plus"></i> Create User</h3>
+    </div>
+    <form method="POST" action="{{ url_for('users.create') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Application</label>
+                <select name="app_id" class="form-control" required>
+                    <option value="">Select App</option>
+                    {% for app in apps %}
+                    <option value="{{ app._id }}">{{ app.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+            <div class="form-group">
+                <label>License Key</label>
+                <input type="text" name="license_key" class="form-control" placeholder="NEUTRON-XXXX-XXXX-XXXX" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2"><i class="fas fa-plus"></i> Create User</button>
+    </form>
+</div>
+
+<!-- Licenses Table -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-key"></i> Licenses ({{ licenses|length }})</h3>
+    </div>
+
+    {% if licenses %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lic in licenses %}
+                <tr>
+                    <td>
+                        <span class="secret-key">{{ lic.key }}</span>
+                        <button class="copy-btn" onclick="copyText('{{ lic.key }}')"><i class="fas fa-copy"></i></button>
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-used' if lic.is_used else 'badge-unused' }}">
+                            {{ 'Used' if lic.is_used else 'Unused' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ lic.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if not lic.is_used %}
+                        <form method="POST" action="{{ url_for('users.delete_license', license_id=lic._id) }}"
+                              onsubmit="return confirm('Delete this license?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-key"></i>
+        <p>No licenses yet. Generate some above.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-users"></i> App Users ({{ users|length }})</h3>
+    </div>
+
+    {% if users %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>License</th>
+                    <th>HWID</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td><span class="secret-key" style="font-size:11px;">{{ user.license_key }}</span></td>
+                    <td class="text-muted" style="font-size:12px;">{{ user.hwid or 'Not set' }}</td>
+                    <td class="text-muted">
+                        {% if user.expiry %}
+                            {{ user.expiry.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            Lifetime
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-active' if user.is_active else 'badge-inactive' }}">
+                            {{ 'Active' if user.is_active else 'Disabled' }}
+                        </span>
+                    </td>
+                    <td class="table-actions">
+                        <form method="POST" action="{{ url_for('users.toggle', user_id=user._id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline">
+                                {{ 'Disable' if user.is_active else 'Enable' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('users.delete', user_id=user._id) }}"
+                              onsubmit="return confirm('Delete this user?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-users"></i>
+        <p>No users yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

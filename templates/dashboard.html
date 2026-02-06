@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}NEUTRON - Dashboard{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<!-- Backup Section -->
+{% if admin.role in ['superadmin', 'admin'] %}
+<div class="card backup-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="backup-info">
+            <h3><i class="fas fa-database text-red"></i> Database Backup</h3>
+            <p>Automatic backup + manual backup option</p>
+            <div class="backup-time">Last backup: {{ last_backup }}</div>
+        </div>
+        <form method="POST" action="{{ url_for('dashboard.backup') }}">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-cloud-download-alt"></i> Manual Backup
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-mobile-alt"></i> Applications</div>
+        <div class="stat-number">{{ stats.apps }}</div>
+        <div class="stat-label">Total Apps</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i> Users</div>
+        <div class="stat-number">{{ stats.users }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-box"></i> Packages</div>
+        <div class="stat-number">{{ stats.packages }}</div>
+        <div class="stat-label">Total Packages</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-key"></i> Licenses</div>
+        <div class="stat-number">{{ stats.licenses }}</div>
+        <div class="stat-label">Total Licenses</div>
+        <div class="stat-sub">{{ stats.licenses_unused }} unused / {{ stats.licenses_used }} used</div>
+    </div>
+</div>
+
+{% if admin.role in ['superadmin', 'admin'] %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-user-shield"></i> Admins</div>
+        <div class="stat-number">{{ stats.admins }}</div>
+        <div class="stat-label">Total Admins</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-store"></i> Resellers</div>
+        <div class="stat-number">{{ stats.resellers }}</div>
+        <div class="stat-label">Total Resellers</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Role Info -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-crown"></i> Account Status</h3>
+    </div>
+    <div class="text-center">
+        <span class="badge badge-active" style="font-size:14px; padding:8px 20px;">
+            {{ admin.role|replace('superadmin','Super Admin')|replace('admin','Admin')|replace('reseller','Reseller') }} Account Active
+        </span>
+        <p class="text-muted" style="margin-top:12px;">Logged in as <strong>{{ admin.username }}</strong></p>
+    </div>
+</div>
+{% endblock %}

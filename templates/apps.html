@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}NEUTRON - Applications{% endblock %}
+{% block page_title %}Applications{% endblock %}
+
+{% block content %}
+<!-- Create App -->
+{% if admin.role in ['superadmin', 'admin'] %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-plus-circle"></i> Create Application</h3>
+    </div>
+    <form method="POST" action="{{ url_for('apps.create') }}" class="form-inline">
+        <div class="form-group">
+            <label>Application Name</label>
+            <input type="text" name="name" class="form-control" placeholder="My Application" required>
+        </div>
+        <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Create</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Apps List -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-mobile-alt"></i> All Applications ({{ apps|length }})</h3>
+    </div>
+
+    {% if apps %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Secret Key</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in apps %}
+                <tr>
+                    <td><strong>{{ app.name }}</strong></td>
+                    <td>
+                        <span class="secret-key" id="key-{{ app._id }}">{{ app.secret_key }}</span>
+                        <button class="copy-btn" onclick="copyText('{{ app.secret_key }}')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge {{ 'badge-active' if app.is_active else 'badge-inactive' }}">
+                            {{ 'Active' if app.is_active else 'Disabled' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="table-actions">
+                        {% if admin.role in ['superadmin', 'admin'] %}
+                        <form method="POST" action="{{ url_for('apps.toggle', app_id=app._id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline">
+                                {{ 'Disable' if app.is_active else 'Enable' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('apps.delete', app_id=app._id) }}"
+                              onsubmit="return confirm('Delete this app and ALL its data?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-mobile-alt"></i>
+        <p>No applications yet. Create one above.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
