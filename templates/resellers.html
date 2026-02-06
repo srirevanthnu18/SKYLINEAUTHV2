@@ -40,8 +40,10 @@
                 <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Credits</th>
                     <th>Status</th>
                     <th>Created</th>
+                    <th>Assigned Packages</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -51,11 +53,45 @@
                     <td><strong>{{ reseller.username }}</strong></td>
                     <td class="text-muted">{{ reseller.email or 'N/A' }}</td>
                     <td>
+                        <strong>{{ reseller.get('credits', 0) }}</strong>
+                        <form method="POST" action="{{ url_for('resellers.give_credits', reseller_id=reseller._id) }}" style="display:inline-flex; gap:4px; margin-top:4px;">
+                            <input type="number" name="credits" value="10" min="1" max="10000" class="form-control" style="width:70px; padding:4px; font-size:12px;">
+                            <button type="submit" class="btn btn-sm btn-success" title="Give Credits"><i class="fas fa-coins"></i></button>
+                        </form>
+                    </td>
+                    <td>
                         <span class="badge {{ 'badge-active' if reseller.is_active else 'badge-inactive' }}">
                             {{ 'Active' if reseller.is_active else 'Disabled' }}
                         </span>
                     </td>
                     <td class="text-muted">{{ reseller.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <!-- Assigned Packages -->
+                        {% if reseller.assigned_package_list %}
+                        <div style="margin-bottom:6px;">
+                            {% for pkg in reseller.assigned_package_list %}
+                            <span class="badge badge-active" style="margin-right:4px;">
+                                {{ pkg.name }} ({{ pkg.duration_days }}d)
+                                <form method="POST" action="{{ url_for('resellers.remove_package', reseller_id=reseller._id, package_id=pkg._id) }}" style="display:inline;">
+                                    <button type="submit" style="background:none;border:none;color:#ff4444;cursor:pointer;font-size:12px;padding:0 2px;" title="Remove">&times;</button>
+                                </form>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted" style="font-size:12px;">No packages assigned</span>
+                        {% endif %}
+                        <!-- Assign Package Form -->
+                        <form method="POST" action="{{ url_for('resellers.assign_package', reseller_id=reseller._id) }}" style="display:inline-flex; gap:4px; margin-top:4px;">
+                            <select name="package_id" class="form-control" style="width:auto; padding:4px; font-size:12px;" required>
+                                <option value="">+ Add Package</option>
+                                {% for pkg in packages %}
+                                <option value="{{ pkg._id }}">{{ pkg.name }} ({{ pkg.duration_days }}d)</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button>
+                        </form>
+                    </td>
                     <td class="table-actions">
                         <form method="POST" action="{{ url_for('resellers.toggle', reseller_id=reseller._id) }}">
                             <button type="submit" class="btn btn-sm btn-outline">

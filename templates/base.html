@@ -18,11 +18,13 @@
                 <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                     <i class="fas fa-chart-pie"></i> <span>Overview</span>
                 </a>
+                {% if session.get('role') in ['superadmin', 'admin'] %}
                 <a href="{{ url_for('apps.index') }}" class="nav-item {% if request.endpoint and 'apps' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-mobile-alt"></i> <span>Apps</span>
                 </a>
+                {% endif %}
                 <a href="{{ url_for('users.index') }}" class="nav-item {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
-                    <i class="fas fa-users"></i> <span>Users</span>
+                    <i class="fas fa-users"></i> <span>Users & Keys</span>
                 </a>
                 {% if session.get('role') in ['superadmin', 'admin'] %}
                 <a href="{{ url_for('resellers.index') }}" class="nav-item {% if request.endpoint and 'resellers' in request.endpoint %}active{% endif %}">
@@ -56,6 +58,9 @@
                 </div>
                 <div class="top-bar-right">
                     <span class="user-info">
+                        <i class="fas fa-coins" style="color:#f0b90b;"></i>
+                        <strong>{{ session.get('credits', 0) }}</strong> credits
+                        &nbsp;&nbsp;
                         <i class="fas fa-circle text-success"></i>
                         {{ session.get('username', 'User') }}
                         <span class="badge badge-role">{{ session.get('role', '').replace('superadmin', 'Super Admin').replace('admin', 'Admin').replace('reseller', 'Reseller') }}</span>

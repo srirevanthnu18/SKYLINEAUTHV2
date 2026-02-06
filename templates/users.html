@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}NEUTRON - Users & Licenses{% endblock %}
-{% block page_title %}Users & Licenses{% endblock %}
+{% block title %}NEUTRON - Users{% endblock %}
+{% block page_title %}Users{% endblock %}
 
 {% block content %}
-<!-- Generate Licenses -->
+<!-- Create User -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-key"></i> Generate Licenses</h3>
+        <h3><i class="fas fa-user-plus"></i> Create User <small class="text-muted">(1 credit per user)</small></h3>
     </div>
-    <form method="POST" action="{{ url_for('users.generate_licenses') }}">
+    {% if packages %}
+    <form method="POST" action="{{ url_for('users.create') }}">
         <div class="form-row">
             <div class="form-group">
                 <label>Application</label>
@@ -32,91 +33,41 @@
                 <label>Count</label>
                 <input type="number" name="count" class="form-control" value="1" min="1" max="100">
             </div>
-        </div>
-        <button type="submit" class="btn btn-success mt-2"><i class="fas fa-plus"></i> Generate</button>
-    </form>
-</div>
-
-<!-- Create User -->
-<div class="card">
-    <div class="card-header">
-        <h3><i class="fas fa-user-plus"></i> Create User</h3>
-    </div>
-    <form method="POST" action="{{ url_for('users.create') }}">
-        <div class="form-row">
             <div class="form-group">
-                <label>Application</label>
-                <select name="app_id" class="form-control" required>
-                    <option value="">Select App</option>
-                    {% for app in apps %}
-                    <option value="{{ app._id }}">{{ app.name }}</option>
-                    {% endfor %}
-                </select>
+                <label>Validity (Days)</label>
+                <input type="number" name="custom_days" class="form-control" placeholder="Package default" min="1"
+                    max="3650">
+                <small class="text-muted">Leave empty for package default</small>
             </div>
             <div class="form-group">
-                <label>Username</label>
-                <input type="text" name="username" class="form-control" placeholder="Username" required>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" placeholder="Password" required>
-            </div>
-            <div class="form-group">
-                <label>License Key</label>
-                <input type="text" name="license_key" class="form-control" placeholder="NEUTRON-XXXX-XXXX-XXXX" required>
+                <label>HWID Lock</label>
+                <div style="padding-top:8px;">
+                    <label style="cursor:pointer; font-weight:normal;">
+                        <input type="checkbox" name="hwid_lock" checked> Lock HWID on first use
+                    </label>
+                </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary mt-2"><i class="fas fa-plus"></i> Create User</button>
+        <div class="form-row" style="margin-top:10px;">
+            <div class="form-group">
+                <label>Custom Username <small class="text-muted">(optional)</small></label>
+                <input type="text" name="username" class="form-control" placeholder="Auto-generate if empty">
+            </div>
+            <div class="form-group">
+                <label>Custom Password <small class="text-muted">(optional)</small></label>
+                <input type="text" name="password" class="form-control" placeholder="Auto-generate if empty">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success mt-2"><i class="fas fa-plus"></i> Create User</button>
     </form>
-</div>
-
-<!-- Licenses Table -->
-<div class="card">
-    <div class="card-header">
-        <h3><i class="fas fa-key"></i> Licenses ({{ licenses|length }})</h3>
-    </div>
-
-    {% if licenses %}
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Key</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for lic in licenses %}
-                <tr>
-                    <td>
-                        <span class="secret-key">{{ lic.key }}</span>
-                        <button class="copy-btn" onclick="copyText('{{ lic.key }}')"><i class="fas fa-copy"></i></button>
-                    </td>
-                    <td>
-                        <span class="badge {{ 'badge-used' if lic.is_used else 'badge-unused' }}">
-                            {{ 'Used' if lic.is_used else 'Unused' }}
-                        </span>
-                    </td>
-                    <td class="text-muted">{{ lic.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>
-                        {% if not lic.is_used %}
-                        <form method="POST" action="{{ url_for('users.delete_license', license_id=lic._id) }}"
-                              onsubmit="return confirm('Delete this license?')">
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
     {% else %}
     <div class="empty-state">
-        <i class="fas fa-key"></i>
-        <p>No licenses yet. Generate some above.</p>
+        <i class="fas fa-box"></i>
+        {% if admin.role == 'reseller' %}
+        <p>No packages assigned to you. Contact an admin to get packages assigned.</p>
+        {% else %}
+        <p>No packages found. Create a package first.</p>
+        {% endif %}
     </div>
     {% endif %}
 </div>
@@ -124,7 +75,7 @@
 <!-- Users Table -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-users"></i> App Users ({{ users|length }})</h3>
+        <h3><i class="fas fa-users"></i> Users ({{ users|length }})</h3>
     </div>
 
     {% if users %}
@@ -132,40 +83,68 @@
         <table>
             <thead>
                 <tr>
-                    <th>Username</th>
-                    <th>License</th>
+                    <th>Key</th>
                     <th>HWID</th>
                     <th>Expiry</th>
                     <th>Status</th>
+                    <th>Created By</th>
+                    <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
                 <tr>
-                    <td><strong>{{ user.username }}</strong></td>
-                    <td><span class="secret-key" style="font-size:11px;">{{ user.license_key }}</span></td>
-                    <td class="text-muted" style="font-size:12px;">{{ user.hwid or 'Not set' }}</td>
+                    <td>
+                        <span class="secret-key">{{ user.key }}</span>
+                        <button class="copy-btn" onclick="copyText('{{ user.key }}')"><i
+                                class="fas fa-copy"></i></button>
+                    </td>
+                    <td class="text-muted" style="font-size:12px;">
+                        {% if user.get('hwid_lock', true) %}
+                        {{ user.hwid or 'Not set' }}
+                        {% else %}
+                        <span class="badge badge-inactive">Unlocked</span>
+                        {% endif %}
+                    </td>
                     <td class="text-muted">
                         {% if user.expiry %}
-                            {{ user.expiry.strftime('%Y-%m-%d') }}
+                        {{ user.expiry.strftime('%Y-%m-%d') }}
                         {% else %}
-                            Lifetime
+                        Lifetime
                         {% endif %}
                     </td>
                     <td>
                         <span class="badge {{ 'badge-active' if user.is_active else 'badge-inactive' }}">
-                            {{ 'Active' if user.is_active else 'Disabled' }}
+                            {{ 'Active' if user.is_active else 'Banned' }}
                         </span>
                     </td>
+                    <td><strong>{{ user.creator_username }}</strong></td>
+                    <td class="text-muted">{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td class="table-actions">
-                        <form method="POST" action="{{ url_for('users.toggle', user_id=user._id) }}">
-                            <button type="submit" class="btn btn-sm btn-outline">
-                                {{ 'Disable' if user.is_active else 'Enable' }}
+                        <form method="POST" action="{{ url_for('users.reset_hwid', user_id=user._id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline" title="Reset HWID">
+                                <i class="fas fa-redo"></i> HWID
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('users.extend_license', user_id=user._id) }}"
+                            style="display:inline-flex; gap:4px;">
+                            <input type="number" name="days" value="30" min="1" max="365" class="form-control"
+                                style="width:60px; padding:4px;">
+                            <button type="submit" class="btn btn-sm btn-outline" title="Extend">
+                                <i class="fas fa-clock"></i> Extend
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('users.ban_license', user_id=user._id) }}">
+                            <button type="submit"
+                                class="btn btn-sm {{ 'btn-danger' if user.is_active else 'btn-success' }}"
+                                title="{{ 'Ban' if user.is_active else 'Unban' }}">
+                                <i class="fas {{ 'fa-ban' if user.is_active else 'fa-check' }}"></i> {{ 'Ban' if
+                                user.is_active else 'Unban' }}
                             </button>
                         </form>
                         <form method="POST" action="{{ url_for('users.delete', user_id=user._id) }}"
-                              onsubmit="return confirm('Delete this user?')">
+                            onsubmit="return confirm('Delete this user?')">
                             <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                         </form>
                     </td>
@@ -177,8 +156,183 @@
     {% else %}
     <div class="empty-state">
         <i class="fas fa-users"></i>
-        <p>No users yet.</p>
+        <p>No users yet. Create one above.</p>
     </div>
     {% endif %}
 </div>
+
+<!-- Credentials Modal -->
+{% if session.get('created_credentials') %}
+<div class="modal-overlay" id="credentialsModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Created Credentials</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% set creds = session.pop('created_credentials') %}
+            <div class="creds-info">
+                <p><strong>App:</strong> {{ creds.app }}</p>
+                <p><strong>Package:</strong> {{ creds.package }}</p>
+                <p><strong>Valid Until:</strong> {{ creds.expiry }}</p>
+                <p><strong>Created By:</strong> {{ creds.created_by }}</p>
+            </div>
+            <hr>
+            {% for user in creds.users %}
+            <div class="cred-item">
+                <div class="cred-row">
+                    <label>Username/Key:</label>
+                    <div class="cred-value">
+                        <input type="text" id="key-{{ loop.index }}" value="{{ user.key }}" readonly>
+                        <button class="btn btn-sm btn-outline" onclick="copyField('key-{{ loop.index }}')"><i
+                                class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="cred-row">
+                    <label>Password:</label>
+                    <div class="cred-value">
+                        <input type="text" id="pass-{{ loop.index }}" value="{{ user.password }}" readonly>
+                        <button class="btn btn-sm btn-outline" onclick="copyField('pass-{{ loop.index }}')"><i
+                                class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+            {% if not loop.last %}
+            <hr>{% endif %}
+            {% endfor %}
+            <div style="margin-top:15px;">
+                <button class="btn btn-success btn-block" onclick="copyAll()">
+                    <i class="fas fa-clipboard"></i> Copy All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-box {
+        background: #1a1a2e;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #333;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #fff;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: #ff4444;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .creds-info {
+        background: #0f0f1a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .creds-info p {
+        margin: 5px 0;
+        color: #ccc;
+    }
+
+    .cred-item {
+        margin: 10px 0;
+    }
+
+    .cred-row {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+        gap: 10px;
+    }
+
+    .cred-row label {
+        min-width: 100px;
+        color: #888;
+    }
+
+    .cred-value {
+        display: flex;
+        flex: 1;
+        gap: 5px;
+    }
+
+    .cred-value input {
+        flex: 1;
+        background: #0f0f1a;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-family: monospace;
+    }
+</style>
+
+<script>
+    function closeModal() {
+        document.getElementById('credentialsModal').style.display = 'none';
+    }
+    function copyField(id) {
+        var input = document.getElementById(id);
+        input.select();
+        document.execCommand('copy');
+        alert('Copied: ' + input.value);
+    }
+    function copyAll() {
+        var modal = document.getElementById('credentialsModal');
+        var infoDiv = modal.querySelector('.creds-info');
+        var app = infoDiv.querySelector('p:nth-child(1)').textContent;
+        var pkg = infoDiv.querySelector('p:nth-child(2)').textContent;
+        var valid = infoDiv.querySelector('p:nth-child(3)').textContent;
+        var createdBy = infoDiv.querySelector('p:nth-child(4)').textContent;
+
+        var allCreds = '';
+        var keys = modal.querySelectorAll('[id^="key-"]');
+        var passes = modal.querySelectorAll('[id^="pass-"]');
+        for (var i = 0; i < keys.length; i++) {
+            allCreds += 'Key: ' + keys[i].value + '\nPassword: ' + passes[i].value + '\n\n';
+        }
+        allCreds += app + '\n' + pkg + '\n' + valid + '\n' + createdBy;
+
+        navigator.clipboard.writeText(allCreds).then(function () {
+            alert('All credentials copied to clipboard!');
+        });
+    }
+</script>
+{% endif %}
 {% endblock %}

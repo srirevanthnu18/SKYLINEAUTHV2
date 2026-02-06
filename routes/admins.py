@@ -56,3 +56,26 @@ def toggle(admin_id):
         db.update_admin(admin_id, {'is_active': not target.get('is_active', True)})
         flash('Admin status updated.', 'success')
     return redirect(url_for('admins.index'))
+
+
+@admins_bp.route('/admins/give-credits/<admin_id>', methods=['POST'])
+@login_required
+@role_required('superadmin')
+def give_credits(admin_id):
+    admin = get_current_admin()
+    amount = request.form.get('credits', 0)
+    try:
+        amount = int(amount)
+    except ValueError:
+        flash('Invalid credit amount.', 'error')
+        return redirect(url_for('admins.index'))
+
+    if amount <= 0:
+        flash('Credit amount must be positive.', 'error')
+    else:
+        success, error = db.transfer_credits(str(admin['_id']), admin_id, amount)
+        if success:
+            flash(f'Gave {amount} credits to admin.', 'success')
+        else:
+            flash(error, 'error')
+    return redirect(url_for('admins.index'))

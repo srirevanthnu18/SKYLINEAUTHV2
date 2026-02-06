@@ -31,7 +31,14 @@ def role_required(*roles):
 
 def get_current_admin():
     if 'admin_id' in session:
-        return db.get_admin_by_id(session['admin_id'])
+        admin = db.get_admin_by_id(session['admin_id'])
+        if admin:
+            # Keep session credits fresh
+            if admin['role'] == 'superadmin':
+                session['credits'] = '∞'
+            else:
+                session['credits'] = admin.get('credits', 0)
+        return admin
     return None
 
 
@@ -49,9 +56,18 @@ def login():
 
         admin = db.verify_admin(username, password)
         if admin:
+            # Get client IP address
+            login_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+            if login_ip:
+                login_ip = login_ip.split(',')[0].strip()  # Get first IP if multiple
+            
+            # Update last login IP in database
+            db.update_login_ip(str(admin['_id']), login_ip)
+            
             session['admin_id'] = str(admin['_id'])
             session['username'] = admin['username']
             session['role'] = admin['role']
+            session['credits'] = '∞' if admin['role'] == 'superadmin' else admin.get('credits', 0)
             return redirect(url_for('dashboard.index'))
         else:
             flash('Invalid username or password.', 'error')
@@ -77,6 +93,7 @@ def setup():
                 session['admin_id'] = str(admin_id)
                 session['username'] = username
                 session['role'] = 'superadmin'
+                session['credits'] = '∞'
                 flash('Super Admin account created!', 'success')
                 return redirect(url_for('dashboard.index'))
             else:

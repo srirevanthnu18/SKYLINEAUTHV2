@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}NEUTRON - Manage {{ app.name }}{% endblock %}
+{% block page_title %}Manage Application{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('apps.index') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Applications
+    </a>
+</div>
+
+<!-- App Details Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-info-circle"></i> Application Details</h3>
+    </div>
+
+    <div class="details-grid">
+        <div class="detail-item">
+            <label><i class="fas fa-cube"></i> App Name</label>
+            <div class="detail-value">{{ app.name }}</div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-user"></i> Owner ID</label>
+            <div class="detail-value">
+                <span class="mono-text" id="owner-id">{{ app.owner_id }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.owner_id }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-key"></i> Secret Key</label>
+            <div class="detail-value">
+                <span class="mono-text secret-key" id="secret-key">{{ app.secret_key }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.secret_key }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-link"></i> API URL</label>
+            <div class="detail-value">
+                <span class="mono-text" id="api-url">{{ api_url }}</span>
+                <button class="copy-btn" onclick="copyText('{{ api_url }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-code-branch"></i> Version</label>
+            <div class="detail-value">{{ app.version if app.version else '1.0.0' }}</div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-toggle-on"></i> Status</label>
+            <div class="detail-value">
+                <span class="badge {{ 'badge-active' if app.is_active else 'badge-inactive' }}">
+                    {{ 'Active' if app.is_active else 'Disabled' }}
+                </span>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-calendar"></i> Created</label>
+            <div class="detail-value">{{ app.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+        </div>
+
+        {% if owner %}
+        <div class="detail-item">
+            <label><i class="fas fa-user-tie"></i> Owner Username</label>
+            <div class="detail-value">{{ owner.username }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- SDK Download Section -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-download"></i> Download SDK</h3>
+    </div>
+
+    <p style="padding: 0 1.5rem; color: var(--text-muted);">
+        Download SDK files with your app credentials pre-configured. Just include them in your project and start
+        authenticating users!
+    </p>
+
+    <div class="sdk-buttons">
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='python') }}" class="sdk-btn python">
+            <i class="fab fa-python"></i>
+            <span>Python SDK</span>
+            <small>.py</small>
+        </a>
+
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='csharp') }}" class="sdk-btn csharp">
+            <i class="fab fa-microsoft"></i>
+            <span>C# SDK</span>
+            <small>.cs</small>
+        </a>
+
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='cpp') }}" class="sdk-btn cpp">
+            <i class="fas fa-code"></i>
+            <span>C++ SDK</span>
+            <small>.hpp</small>
+        </a>
+    </div>
+</div>
+
+<!-- Quick Start Guide -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-rocket"></i> Quick Start</h3>
+    </div>
+
+    <div class="quick-start-content">
+        <h4>1. Download SDK</h4>
+        <p>Choose your programming language and download the SDK file above.</p>
+
+        <h4>2. Include in Project</h4>
+        <p>Add the downloaded file to your project. The SDK comes pre-configured with your app credentials.</p>
+
+        <h4>3. Authenticate Users</h4>
+        <pre><code># Python Example
+from {{ app.name }}_sdk import NeutronAuth
+
+auth = NeutronAuth()
+result = auth.login("user-key", "password")
+
+if result['success']:
+    print("Welcome!", result['user']['username'])
+</code></pre>
+    </div>
+</div>
+
+<style>
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .detail-item {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-item label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-item label i {
+        margin-right: 0.5rem;
+        color: var(--primary);
+    }
+
+    .detail-value {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1rem;
+        color: var(--text-light);
+    }
+
+    .mono-text {
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.9rem;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        word-break: break-all;
+    }
+
+    .secret-key {
+        max-width: 280px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sdk-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    .sdk-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        min-width: 160px;
+    }
+
+    .sdk-btn i {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .sdk-btn span {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .sdk-btn small {
+        opacity: 0.7;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .sdk-btn.python {
+        background: linear-gradient(135deg, #3776AB, #FFD43B);
+        color: #fff;
+    }
+
+    .sdk-btn.csharp {
+        background: linear-gradient(135deg, #68217A, #953DAC);
+        color: #fff;
+    }
+
+    .sdk-btn.cpp {
+        background: linear-gradient(135deg, #00599C, #004482);
+        color: #fff;
+    }
+
+    .sdk-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .quick-start-content {
+        padding: 1.5rem;
+    }
+
+    .quick-start-content h4 {
+        color: var(--primary);
+        margin: 1.25rem 0 0.5rem;
+    }
+
+    .quick-start-content h4:first-child {
+        margin-top: 0;
+    }
+
+    .quick-start-content p {
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-start-content pre {
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+
+    .quick-start-content code {
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.9rem;
+        color: #a5d6ff;
+    }
+</style>
+{% endblock %}

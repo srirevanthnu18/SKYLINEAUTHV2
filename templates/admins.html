@@ -40,6 +40,7 @@
                 <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Credits</th>
                     <th>Status</th>
                     <th>Created</th>
                     <th>Actions</th>
@@ -50,6 +51,13 @@
                 <tr>
                     <td><strong>{{ adm.username }}</strong></td>
                     <td class="text-muted">{{ adm.email or 'N/A' }}</td>
+                    <td>
+                        <strong>{{ adm.get('credits', 0) }}</strong>
+                        <form method="POST" action="{{ url_for('admins.give_credits', admin_id=adm._id) }}" style="display:inline-flex; gap:4px; margin-top:4px;">
+                            <input type="number" name="credits" value="10" min="1" max="10000" class="form-control" style="width:70px; padding:4px; font-size:12px;">
+                            <button type="submit" class="btn btn-sm btn-success" title="Give Credits"><i class="fas fa-coins"></i></button>
+                        </form>
+                    </td>
                     <td>
                         <span class="badge {{ 'badge-active' if adm.is_active else 'badge-inactive' }}">
                             {{ 'Active' if adm.is_active else 'Disabled' }}

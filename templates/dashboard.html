@@ -22,7 +22,31 @@
 {% endif %}
 
 <!-- Stats Grid -->
+{% if admin.role == 'reseller' %}
 <div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-coins" style="color:#f0b90b;"></i> Credits</div>
+        <div class="stat-number">{{ stats.credits }}</div>
+        <div class="stat-label">Available Credits</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i> Your Users</div>
+        <div class="stat-number">{{ stats.users }}</div>
+        <div class="stat-label">Users Created</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-box"></i> Packages</div>
+        <div class="stat-number">{{ stats.assigned_packages }}</div>
+        <div class="stat-label">Assigned Packages</div>
+    </div>
+</div>
+{% else %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-coins" style="color:#f0b90b;"></i> Credits</div>
+        <div class="stat-number">{{ stats.credits }}</div>
+        <div class="stat-label">Available Credits</div>
+    </div>
     <div class="stat-card">
         <div class="stat-icon"><i class="fas fa-mobile-alt"></i> Applications</div>
         <div class="stat-number">{{ stats.apps }}</div>
@@ -38,15 +62,7 @@
         <div class="stat-number">{{ stats.packages }}</div>
         <div class="stat-label">Total Packages</div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-key"></i> Licenses</div>
-        <div class="stat-number">{{ stats.licenses }}</div>
-        <div class="stat-label">Total Licenses</div>
-        <div class="stat-sub">{{ stats.licenses_unused }} unused / {{ stats.licenses_used }} used</div>
-    </div>
 </div>
-
-{% if admin.role in ['superadmin', 'admin'] %}
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon"><i class="fas fa-user-shield"></i> Admins</div>

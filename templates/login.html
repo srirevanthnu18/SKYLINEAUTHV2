@@ -1,12 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEUTRON - Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Custom Aesthetic Styling -->
+    <style>
+        /* Dark Gradient Background with Blur Blobs */
+        .login-page {
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Soft Blur Blobs */
+        .login-page::before,
+        .login-page::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .login-page::before {
+            width: 400px;
+            height: 400px;
+            background: #00d9ff;
+            top: -100px;
+            left: -100px;
+            animation: float1 12s ease-in-out infinite;
+        }
+
+        .login-page::after {
+            width: 350px;
+            height: 350px;
+            background: #7c3aed;
+            bottom: -80px;
+            right: -80px;
+            animation: float2 15s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        @keyframes float2 {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(-40px, -40px);
+            }
+        }
+
+        /* Glassmorphism Card */
+        .login-page .login-box {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Status Dot - Online Indicator */
+        .login-page .login-box::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .login-page .login-box::after {
+            content: 'Online';
+            position: absolute;
+            top: 14px;
+            right: 32px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Logo Styling */
+        .login-page .login-brand h1 {
+            color: #fff;
+            letter-spacing: 4px;
+        }
+
+        .login-page .login-brand p {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Rounded Inputs with Inner Shadow */
+        .login-page .form-control {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            color: #fff;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .login-page .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Cyan Neon Focus Effect */
+        .login-page .form-control:focus {
+            border-color: #00d9ff;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4),
+                0 0 0 3px rgba(0, 217, 255, 0.15),
+                0 0 20px rgba(0, 217, 255, 0.2);
+            outline: none;
+        }
+
+        /* Labels */
+        .login-page label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        /* Neon Glow Button */
+        .login-page .btn-danger {
+            background: linear-gradient(135deg, #00d9ff, #00b4d8);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0, 217, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .login-page .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(0, 217, 255, 0.6),
+                0 0 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .login-page .btn-danger:active {
+            transform: translateY(0);
+        }
+    </style>
 </head>
+
 <body>
     <div class="login-page">
         <div class="login-box">
@@ -29,7 +206,8 @@
             <form method="POST">
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
+                    <input type="text" name="username" class="form-control" placeholder="Enter username" required
+                        autofocus>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -42,4 +220,5 @@
         </div>
     </div>
 </body>
+
 </html>

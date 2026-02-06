@@ -55,13 +55,16 @@
                     <td class="text-muted">{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td class="table-actions">
                         {% if admin.role in ['superadmin', 'admin'] %}
+                        <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-cog"></i> Manage
+                        </a>
                         <form method="POST" action="{{ url_for('apps.toggle', app_id=app._id) }}">
                             <button type="submit" class="btn btn-sm btn-outline">
                                 {{ 'Disable' if app.is_active else 'Enable' }}
                             </button>
                         </form>
                         <form method="POST" action="{{ url_for('apps.delete', app_id=app._id) }}"
-                              onsubmit="return confirm('Delete this app and ALL its data?')">
+                            onsubmit="return confirm('Delete this app and ALL its data?')">
                             <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                         </form>
                         {% endif %}
