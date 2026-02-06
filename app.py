@@ -1,4 +1,6 @@
+# Updated for GitHub sync
 from flask import Flask
+
 from config import Config
 from models import db
 
