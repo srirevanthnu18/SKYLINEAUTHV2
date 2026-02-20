@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NEUTRON{% endblock %}</title>
+    <title>{% block title %}SKYLINE{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -12,10 +12,10 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-brand">
-                <span class="brand-text">NEUTRON</span>
+                <span class="brand-text">SKYLINE</span>
             </div>
             <nav class="sidebar-nav">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <a href="{{ url_for('auth.user_dashboard') if session.get('role') == 'user' else url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' or request.endpoint == 'auth.user_dashboard' %}active{% endif %}">
                     <i class="fas fa-chart-pie"></i> <span>Overview</span>
                 </a>
                 {% if session.get('role') in ['superadmin', 'admin'] %}
@@ -23,9 +23,11 @@
                     <i class="fas fa-mobile-alt"></i> <span>Apps</span>
                 </a>
                 {% endif %}
+                {% if session.get('role') in ['superadmin', 'admin', 'reseller'] %}
                 <a href="{{ url_for('users.index') }}" class="nav-item {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-users"></i> <span>Users & Keys</span>
                 </a>
+                {% endif %}
                 {% if session.get('role') in ['superadmin', 'admin'] %}
                 <a href="{{ url_for('resellers.index') }}" class="nav-item {% if request.endpoint and 'resellers' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-store"></i> <span>Resellers</span>
@@ -39,9 +41,11 @@
                     <i class="fas fa-user-shield"></i> <span>Admins</span>
                 </a>
                 {% endif %}
+                {% if session.get('role') in ['superadmin', 'admin', 'reseller'] %}
                 <a href="{{ url_for('profile.index') }}" class="nav-item {% if request.endpoint and 'profile' in request.endpoint %}active{% endif %}">
                     <i class="fas fa-user-circle"></i> <span>Profile</span>
                 </a>
+                {% endif %}
             </nav>
             <div class="sidebar-footer">
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-danger btn-block">

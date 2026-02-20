@@ -55,7 +55,7 @@ def check():
     if not app:
         return jsonify({'success': False, 'error': 'Invalid application'}), 401
 
-    lic = db.db.licenses.find_one({'key': license_key, 'app_id': app['_id']})
+    lic = db.db.app_users.find_one({'key': license_key, 'app_id': app['_id']})
     if not lic:
         return jsonify({'success': False, 'error': 'Invalid license'}), 404
 
@@ -63,7 +63,7 @@ def check():
         'success': True,
         'license': {
             'key': lic['key'],
-            'is_used': lic['is_used'],
-            'created_at': lic['created_at'].isoformat(),
+            'is_used': lic.get('is_active', True),
+            'created_at': lic['created_at'].isoformat() if lic.get('created_at') else None,
         }
     })

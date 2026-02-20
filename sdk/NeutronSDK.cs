@@ -1,5 +1,5 @@
 /*
- * Neutron SDK - C# Authentication Library
+ * SKYLINE SDK - C# Authentication Library
  * =========================================
  * Use this SDK to authenticate users in your C# / .NET application.
  * 

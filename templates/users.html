@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}NEUTRON - Users{% endblock %}
+{% block title %}SKYLINE- Users{% endblock %}
 {% block page_title %}Users{% endblock %}
 
 {% block content %}
 <!-- Create User -->
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-user-plus"></i> Create User <small class="text-muted">(1 credit per user)</small></h3>
+        <h3><i class="fas fa-user-plus"></i> Create User</h3>
     </div>
     {% if packages %}
     <form method="POST" action="{{ url_for('users.create') }}">

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE- User{% endblock %}
+{% block page_title %}Your License{% endblock %}
+
+{% block content %}
+<div class="user-dashboard">
+    <div class="user-hero">
+        <div class="hero-left">
+            <div class="hero-title">
+                <i class="fas fa-id-badge"></i>
+                <span>License Overview</span>
+            </div>
+            <div class="hero-subtitle">Your account is protected and active.</div>
+        </div>
+        <div class="hero-right">
+            <span class="hero-badge {{ 'hero-badge-active' if user.is_active else 'hero-badge-banned' }}">
+                {{ 'Active' if user.is_active else 'Banned' }}
+            </span>
+        </div>
+    </div>
+
+    <div class="user-grid">
+        <div class="user-card">
+            <div class="card-label">Key</div>
+            <div class="card-value mono-text">{{ user.key }}</div>
+        </div>
+        <div class="user-card">
+            <div class="card-label">Expiry</div>
+            <div class="card-value">
+                {{ user.expiry.strftime('%Y-%m-%d %H:%M:%S') if user.expiry else 'N/A' }}
+            </div>
+        </div>
+        <div class="user-card">
+            <div class="card-label">Created</div>
+            <div class="card-value">
+                {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+            </div>
+        </div>
+        <div class="user-card">
+            <div class="card-label">Status</div>
+            <div class="card-value">
+                <span class="badge {{ 'badge-active' if user.is_active else 'badge-inactive' }}">
+                    {{ 'Active' if user.is_active else 'Banned' }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .user-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 28px;
+        border-radius: 16px;
+        background: radial-gradient(120% 120% at 10% 10%, rgba(0, 221, 255, 0.15), transparent 60%),
+            radial-gradient(120% 120% at 90% 20%, rgba(136, 85, 255, 0.18), transparent 55%),
+            linear-gradient(135deg, rgba(22, 22, 31, 0.9), rgba(28, 28, 40, 0.9));
+        border: 1px solid rgba(68, 136, 255, 0.2);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .hero-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .hero-title i {
+        color: var(--accent-cyan);
+    }
+
+    .hero-subtitle {
+        margin-top: 6px;
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .hero-badge {
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .hero-badge-active {
+        color: var(--accent-green);
+        background: rgba(0, 255, 136, 0.15);
+        border: 1px solid rgba(0, 255, 136, 0.5);
+        box-shadow: 0 0 12px rgba(0, 255, 136, 0.35);
+    }
+
+    .hero-badge-banned {
+        color: var(--accent-red);
+        background: rgba(230, 57, 70, 0.15);
+        border: 1px solid rgba(230, 57, 70, 0.6);
+        box-shadow: 0 0 12px rgba(230, 57, 70, 0.35);
+    }
+
+    .user-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+    }
+
+    .user-card {
+        background: linear-gradient(180deg, rgba(22, 22, 31, 0.9), rgba(18, 18, 28, 0.95));
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .user-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(0, 221, 255, 0.35);
+    }
+
+    .card-label {
+        color: var(--text-muted);
+        font-size: 12px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .card-value {
+        font-size: 15px;
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+</style>
+{% endblock %}

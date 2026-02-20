@@ -21,6 +21,7 @@ def create_app():
     from routes.admins import admins_bp
     from routes.api import api_bp
 
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(apps_bp)
@@ -30,6 +31,7 @@ def create_app():
     app.register_blueprint(profile_bp)
     app.register_blueprint(admins_bp)
     app.register_blueprint(api_bp)
+
 
     return app
 

@@ -9,6 +9,8 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'admin_id' not in session:
+            if 'user_id' in session:
+                return redirect(url_for('auth.user_dashboard'))
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated
@@ -19,6 +21,8 @@ def role_required(*roles):
         @wraps(f)
         def decorated(*args, **kwargs):
             if 'admin_id' not in session:
+                if 'user_id' in session:
+                    return redirect(url_for('auth.user_dashboard'))
                 return redirect(url_for('auth.login'))
             admin = db.get_admin_by_id(session['admin_id'])
             if not admin or admin['role'] not in roles:
@@ -42,10 +46,30 @@ def get_current_admin():
     return None
 
 
+
+def user_login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            if 'admin_id' in session:
+                return redirect(url_for('dashboard.index'))
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def get_current_user():
+    if 'user_id' in session:
+        return db.get_app_user_by_id(session['user_id'])
+    return None
+
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if 'admin_id' in session:
         return redirect(url_for('dashboard.index'))
+    if 'user_id' in session:
+        return redirect(url_for('auth.user_dashboard'))
 
     if db.count_admins() == 0:
         return redirect(url_for('auth.setup'))
@@ -68,9 +92,16 @@ def login():
             session['username'] = admin['username']
             session['role'] = admin['role']
             session['credits'] = '∞' if admin['role'] == 'superadmin' else admin.get('credits', 0)
+            flash('Login successfully.', 'login-success')
             return redirect(url_for('dashboard.index'))
-        else:
-            flash('Invalid username or password.', 'error')
+        user = db.verify_app_user(username, password)
+        if user:
+            session['user_id'] = str(user['_id'])
+            session['username'] = user['key']
+            session['role'] = 'user'
+            session['credits'] = 0
+            return redirect(url_for('auth.user_dashboard'))
+        flash('Invalid username or password.', 'error')
 
     return render_template('login.html')
 
@@ -100,6 +131,16 @@ def setup():
                 flash('Failed to create account.', 'error')
 
     return render_template('setup.html')
+
+
+@auth_bp.route('/user')
+@user_login_required
+def user_dashboard():
+    user = get_current_user()
+    if not user:
+        session.clear()
+        return redirect(url_for('auth.login'))
+    return render_template('user_dashboard.html', user=user)
 
 
 @auth_bp.route('/logout')

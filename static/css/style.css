@@ -429,6 +429,22 @@ table tr:hover { background: rgba(255,255,255,0.02); }
     color: var(--accent-green);
 }
 
+.flash-login-success {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 999;
+    background: rgba(68, 136, 255, 0.15);
+    border: 1px solid rgba(68, 136, 255, 0.7);
+    color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(68, 136, 255, 0.6), 0 0 22px rgba(68, 136, 255, 0.35);
+    text-shadow: 0 0 6px rgba(68, 136, 255, 0.7);
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    max-width: 240px;
+}
+
 .flash-error {
     background: rgba(230,57,70,0.1);
     border: 1px solid rgba(230,57,70,0.3);
