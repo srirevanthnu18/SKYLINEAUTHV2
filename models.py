@@ -23,6 +23,8 @@ class Database:
         self.db.admins.create_index('username', unique=True)
         self.db.apps.create_index('secret_key', unique=True)
         self.db.app_users.create_index('key', unique=True)
+        self.db.sessions.create_index('session_id', unique=True)
+        self.db.sessions.create_index('created_at', expireAfterSeconds=86400) # Auto-delete sessions after 24h
 
     def _to_id(self, val):
         if isinstance(val, ObjectId):
@@ -136,11 +138,66 @@ class Database:
                 'name': name,
                 'secret_key': secrets.token_hex(32),
                 'owner_id': self._to_id(owner_id),
+                'version': '1.0',
+                'variables': {},
                 'created_at': self._now(),
                 'is_active': True
             }
             res = self.db.apps.insert_one(doc)
             return str(res.inserted_id)
+
+    def update_app_version(self, app_id, version):
+        if self.mode == 'mongo':
+            oid = self._to_id(app_id)
+            self.db.apps.update_one({'_id': oid}, {'$set': {'version': version}})
+            return True
+
+    def get_app_by_details(self, name, secret, owner_id):
+        if self.mode == 'mongo':
+            # Strict validation
+            q = {
+                'name': name,
+                'secret_key': secret,
+                'owner_id': self._to_id(owner_id),
+                'is_active': True
+            }
+            return self.db.apps.find_one(q)
+
+    def get_app_stats(self, app_id):
+        if self.mode == 'mongo':
+            oid = self._to_id(app_id)
+            num_users = self.db.app_users.count_documents({'app_id': oid})
+            num_keys = self.db.app_users.count_documents({'app_id': oid}) # Currently keys ARE users in this model
+            
+            # Simple online users check (active in last 10 minutes)
+            # Note: We need a last_active field for this. I'll use last_login for now or assume 0 if not tracked.
+            recent = self._now() - timedelta(minutes=10)
+            num_online = self.db.app_users.count_documents({
+                'app_id': oid,
+                'last_login': {'$gte': recent}
+            }) if 'last_login' in self.db.app_users.find_one({'app_id': oid}) or {} else 0
+            
+            return {
+                'numUsers': str(num_users),
+                'numOnlineUsers': str(num_online),
+                'numKeys': str(num_keys)
+            }
+
+    def get_app_var(self, app_id, varid):
+        if self.mode == 'mongo':
+            app = self.get_app_by_id(app_id)
+            if app and 'variables' in app:
+                return app['variables'].get(varid)
+            return None
+
+    def set_app_var(self, app_id, varid, vardata):
+        if self.mode == 'mongo':
+            oid = self._to_id(app_id)
+            self.db.apps.update_one(
+                {'_id': oid},
+                {'$set': {f'variables.{varid}': vardata}}
+            )
+            return True
 
     def get_apps(self, owner_id=None):
         if self.mode == 'mongo':
@@ -177,6 +234,24 @@ class Database:
             if owner_id:
                 q['owner_id'] = self._to_id(owner_id)
             return self.db.apps.count_documents(q)
+
+    # ── Session management (for protocol compatibility) ─────────────
+
+    def create_session(self, app_id, sent_key):
+        if self.mode == 'mongo':
+            session_id = secrets.token_hex(16)
+            doc = {
+                'session_id': session_id,
+                'app_id': self._to_id(app_id),
+                'sent_key': sent_key,
+                'created_at': self._now()
+            }
+            self.db.sessions.insert_one(doc)
+            return session_id
+
+    def get_session(self, session_id):
+        if self.mode == 'mongo':
+            return self.db.sessions.find_one({'session_id': session_id})
 
     # ── Credit system ───────────────────────────────────────────────
 
@@ -361,6 +436,10 @@ class Database:
                 if not user.get('hwid') and hwid:
                     self.db.app_users.update_one({'_id': user['_id']}, {'$set': {'hwid': hwid}})
                     user['hwid'] = hwid
+            
+            # Update last login for online users tracking
+            self.db.app_users.update_one({'_id': user['_id']}, {'$set': {'last_login': self._now()}})
+            
             return user, None
 
 

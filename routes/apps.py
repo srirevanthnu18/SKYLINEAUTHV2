@@ -50,6 +50,19 @@ def toggle(app_id):
     return redirect(url_for('apps.index'))
 
 
+@apps_bp.route('/apps/update_version/<app_id>', methods=['POST'])
+@login_required
+@role_required('superadmin', 'admin')
+def update_version(app_id):
+    version = request.form.get('version', '').strip()
+    if version:
+        db.update_app_version(app_id, version)
+        flash('Application version updated.', 'success')
+    else:
+        flash('Version cannot be empty.', 'error')
+    return redirect(url_for('apps.manage', app_id=app_id))
+
+
 @apps_bp.route('/apps/manage/<app_id>')
 @login_required
 @role_required('superadmin', 'admin')
@@ -94,8 +107,8 @@ def download_sdk(app_id, language):
     # Map language to file info
     sdk_files = {
         'python': ('neutron_sdk.py', 'text/x-python', f'{app["name"]}_sdk.py'),
-        'csharp': ('NeutronSDK.cs', 'text/plain', f'{app["name"]}SDK.cs'),
-        'cpp': ('NeutronSDK.hpp', 'text/plain', f'{app["name"]}SDK.hpp'),
+        'csharp': ('KeyAuth.cs', 'text/plain', 'KeyAuth.cs'),
+        'cpp': ('KeyAuth.hpp', 'text/plain', 'KeyAuth.hpp'),
     }
     
     if language not in sdk_files:
@@ -113,6 +126,7 @@ def download_sdk(app_id, language):
         content = content.replace('{{API_URL}}', api_url)
         content = content.replace('{{APP_SECRET}}', app['secret_key'])
         content = content.replace('{{APP_NAME}}', app['name'])
+        content = content.replace('{{OWNER_ID}}', str(app['owner_id']))
         content = content.replace('{{VERSION}}', version)
         
         return Response(

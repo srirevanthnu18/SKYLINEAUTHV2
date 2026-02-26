@@ -19,7 +19,12 @@
     <div class="details-grid">
         <div class="detail-item">
             <label><i class="fas fa-cube"></i> App Name</label>
-            <div class="detail-value">{{ app.name }}</div>
+            <div class="detail-value">
+                <span class="mono-text" id="app-name">{{ app.name }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.name }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
         </div>
 
         <div class="detail-item">
@@ -35,7 +40,7 @@
         <div class="detail-item">
             <label><i class="fas fa-key"></i> Secret Key</label>
             <div class="detail-value">
-                <span class="mono-text secret-key" id="secret-key">{{ app.secret_key }}</span>
+                <span class="mono-text" id="secret-key">{{ app.secret_key }}</span>
                 <button class="copy-btn" onclick="copyText('{{ app.secret_key }}')">
                     <i class="fas fa-copy"></i>
                 </button>
@@ -54,7 +59,12 @@
 
         <div class="detail-item">
             <label><i class="fas fa-code-branch"></i> Version</label>
-            <div class="detail-value">{{ app.version if app.version else '1.0.0' }}</div>
+            <div class="detail-value">
+                <span class="mono-text" id="app-version">{{ app.version if app.version else '1.0' }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.version if app.version else '1.0' }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
         </div>
 
         <div class="detail-item">
@@ -75,6 +85,66 @@
         <div class="detail-item">
             <label><i class="fas fa-user-tie"></i> Owner Username</label>
             <div class="detail-value">{{ owner.username }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- App Management Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-cog"></i> Application Settings</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form action="{{ url_for('apps.update_version', app_id=app._id) }}" method="POST"
+            style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 0;">
+            <div style="flex-grow: 1;">
+                <label
+                    style="display: block; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Update
+                    Version</label>
+                <input type="text" name="version" value="{{ app.version if app.version else '1.0' }}"
+                    class="form-control"
+                    style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.5rem;"
+                    required>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Version</button>
+        </form>
+    </div>
+</div>
+
+<!-- App Variables Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-tags"></i> Application Variables</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            Variables allow you to store remote data that can be retrieved by your application.
+        </p>
+
+        {% if app.variables %}
+        <div class="variables-list">
+            {% for varid, vardata in app.variables.items() %}
+            <div
+                style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span
+                        style="color: var(--primary); font-family: 'Fira Code', monospace; font-size: 0.95rem; font-weight: 600;">{{
+                        varid }}</span>
+                    <div style="color: var(--text-light); margin-top: 0.25rem;">{{ vardata }}</div>
+                </div>
+                <button class="copy-btn" onclick="copyText('{{ vardata }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div
+            style="text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.02); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.1);">
+            <i class="fas fa-tags"
+                style="font-size: 2rem; color: rgba(255, 255, 255, 0.1); margin-bottom: 1rem; display: block;"></i>
+            <p style="color: var(--text-muted);">No application variables found.</p>
         </div>
         {% endif %}
     </div>
