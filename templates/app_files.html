@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Files for {{ app.name }}{% endblock %}
+{% block page_title %}Application Files{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to App
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-plus"></i> Create File Entry</h3>
+    </div>
+    <form method="POST" action="{{ url_for('apps_extra.create_file', app_id=app._id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>File Name</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Cheat Loader" required>
+            </div>
+            <div class="form-group">
+                <label>Direct Download URL</label>
+                <input type="url" name="url" class="form-control" placeholder="https://..." required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-plus"></i> Add File</button>
+    </form>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h3><i class="fas fa-file-export"></i> Cloud Files</h3>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>File ID</th>
+                    <th>Download URL</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <tr>
+                    <td>{{ file.name }}</td>
+                    <td><code>{{ file.file_id }}</code></td>
+                    <td><small>{{ file.url }}</small></td>
+                    <td>{{ file.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="table-actions">
+                        <form method="POST"
+                            action="{{ url_for('apps_extra.delete_file', app_id=app._id, file_id=file._id) }}"
+                            onsubmit="return confirm('Delete this file entry?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE- Manage {{ app.name }}{% endblock %}
+{% block page_title %}Manage Application{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div style="margin-bottom: 1.5rem; display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{{ url_for('apps.index') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <a href="{{ url_for('apps_extra.variables', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-tags"></i> Variables
+    </a>
+    <a href="{{ url_for('apps_extra.webhooks', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-webhook"></i> Webhooks
+    </a>
+    <a href="{{ url_for('apps_extra.files', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-file-export"></i> Files
+    </a>
+    <a href="{{ url_for('apps_extra.blacklists', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-ban"></i> Blacklists
+    </a>
+    <a href="{{ url_for('apps_extra.logs', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-history"></i> Logs
+    </a>
+    <a href="{{ url_for('apps_extra.chats', app_id=app._id) }}" class="btn btn-primary">
+        <i class="fas fa-comments"></i> Chat
+    </a>
+</div>
+
+<!-- App Details Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-info-circle"></i> Application Details</h3>
+    </div>
+
+    <div class="details-grid">
+        <div class="detail-item">
+            <label><i class="fas fa-cube"></i> App Name</label>
+            <div class="detail-value">
+                <span class="mono-text" id="app-name">{{ app.name }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.name }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-user"></i> Owner ID</label>
+            <div class="detail-value">
+                <span class="mono-text" id="owner-id">{{ app.owner_id }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.owner_id }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-key"></i> Secret Key</label>
+            <div class="detail-value">
+                <span class="mono-text secret-key" id="secret-key">{{ app.secret_key }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.secret_key }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <form action="{{ url_for('apps.regenerate_secret', app_id=app._id) }}" method="POST"
+                style="margin-top:0.75rem;"
+                onsubmit="return confirm('⚠️ Regenerate secret? Any C# SDKs using the old secret will stop working until you re-download them.')">
+                <button type="submit" class="btn"
+                    style="background:rgba(220,53,69,0.15);border:1px solid rgba(220,53,69,0.4);color:#ff6b6b;font-size:0.8rem;padding:0.35rem 0.85rem;border-radius:6px;cursor:pointer;">
+                    <i class="fas fa-sync-alt"></i> Regenerate Secret
+                </button>
+            </form>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-link"></i> API URL</label>
+            <div class="detail-value">
+                <span class="mono-text" id="api-url">{{ api_url }}</span>
+                <button class="copy-btn" onclick="copyText('{{ api_url }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-code-branch"></i> Version</label>
+            <div class="detail-value">
+                <span class="mono-text" id="app-version">{{ app.version if app.version else '1.0' }}</span>
+                <button class="copy-btn" onclick="copyText('{{ app.version if app.version else '1.0' }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-toggle-on"></i> Status</label>
+            <div class="detail-value">
+                <span class="badge {{ 'badge-active' if app.is_active else 'badge-inactive' }}">
+                    {{ 'Active' if app.is_active else 'Disabled' }}
+                </span>
+            </div>
+        </div>
+
+        <div class="detail-item">
+            <label><i class="fas fa-calendar"></i> Created</label>
+            <div class="detail-value">{{ app.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+        </div>
+
+        {% if owner %}
+        <div class="detail-item">
+            <label><i class="fas fa-user-tie"></i> Owner Username</label>
+            <div class="detail-value">{{ owner.username }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- App Management Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-cog"></i> Application Settings</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form action="{{ url_for('apps.update_settings', app_id=app._id) }}" method="POST">
+            <div class="settings-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+
+                <!-- Main Toggles -->
+                <div class="settings-group">
+                    <label class="setting-label">Security & Status</label>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="is_active" {{ 'checked' if app.get('is_active', True) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Enabled</span>
+                    </div>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="is_paused" {{ 'checked' if app.get('is_paused', False) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Paused (Maintenance)</span>
+                    </div>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="hwid_check" {{ 'checked' if app.get('hwid_check', True) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>HWID Check</span>
+                    </div>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="vpn_block" {{ 'checked' if app.get('vpn_block', False) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>VPN Block</span>
+                    </div>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="hash_check" {{ 'checked' if app.get('hash_check', False) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Hash Check</span>
+                    </div>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" name="force_encryption" {{ 'checked' if app.get('force_encryption',
+                                False) }}>
+                            <span class="slider round"></span>
+                        </label>
+                        <span>Force Encryption</span>
+                    </div>
+                </div>
+
+                <!-- Text Settings -->
+                <div class="settings-group">
+                    <div class="form-field">
+                        <label>Application Version</label>
+                        <input type="text" name="version" value="{{ app.version if app.version else '1.0' }}"
+                            class="form-control">
+                    </div>
+                    <div class="form-field">
+                        <label>Download Link</label>
+                        <input type="text" name="download_link" value="{{ app.get('download_link', '') }}"
+                            class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="form-field">
+                        <label>Session Expiry (Seconds)</label>
+                        <input type="number" name="session_expiry" value="{{ app.get('session_expiry', 3600) }}"
+                            class="form-control">
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="settings-group">
+                    <div class="form-field">
+                        <label>Disabled Message</label>
+                        <textarea name="app_disabled_msg" class="form-control"
+                            style="height: 80px;">{{ app.get('app_disabled_msg', 'Application is currently disabled.') }}</textarea>
+                    </div>
+                    <div class="form-field">
+                        <label>Server Hash (for Checksum)</label>
+                        <input type="text" name="server_hash" value="{{ app.get('server_hash', '') }}"
+                            class="form-control" placeholder="Optional hex hash">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; text-align: right;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                    <i class="fas fa-save"></i> Save All Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .settings-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .setting-label {
+        display: block;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-light);
+        font-size: 0.95rem;
+    }
+
+    .form-field label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Toggle Switch Style */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 22px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(22px);
+    }
+</style>
+
+<!-- App Variables Card -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-tags"></i> Application Variables</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            Variables allow you to store remote data that can be retrieved by your application.
+        </p>
+
+        {% if app.variables %}
+        <div class="variables-list">
+            {% for varid, vardata in app.variables.items() %}
+            <div
+                style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span
+                        style="color: var(--primary); font-family: 'Fira Code', monospace; font-size: 0.95rem; font-weight: 600;">{{
+                        varid }}</span>
+                    <div style="color: var(--text-light); margin-top: 0.25rem;">{{ vardata }}</div>
+                </div>
+                <button class="copy-btn" onclick="copyText('{{ vardata }}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div
+            style="text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.02); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.1);">
+            <i class="fas fa-tags"
+                style="font-size: 2rem; color: rgba(255, 255, 255, 0.1); margin-bottom: 1rem; display: block;"></i>
+            <p style="color: var(--text-muted);">No application variables found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- SDK Download Section -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-download"></i> Download SDK</h3>
+    </div>
+
+    <p style="padding: 0 1.5rem; color: var(--text-muted);">
+        Download SDK files with your app credentials pre-configured. Just include them in your project and start
+        authenticating users!
+    </p>
+
+    <div class="sdk-buttons">
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='python') }}" class="sdk-btn python">
+            <i class="fab fa-python"></i>
+            <span>Python SDK</span>
+            <small>.py</small>
+        </a>
+
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='csharp') }}" class="sdk-btn csharp">
+            <i class="fab fa-microsoft"></i>
+            <span>C# SDK</span>
+            <small>.cs</small>
+        </a>
+
+        <a href="{{ url_for('apps.download_sdk', app_id=app._id, language='cpp') }}" class="sdk-btn cpp">
+            <i class="fas fa-code"></i>
+            <span>C++ SDK</span>
+            <small>.hpp</small>
+        </a>
+    </div>
+</div>
+
+<!-- Quick Start Guide -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-rocket"></i> Quick Start (C# SKYLINE SDK)</h3>
+    </div>
+
+    <div class="quick-start-content">
+        <h4>1. Download the C# SDK</h4>
+        <p>Click <strong>Download C# SDK</strong> above — the file comes pre-configured with your app's credentials.</p>
+
+        <h4>2. Add to your C# Project</h4>
+        <p>Drop <code>SKYLINE.cs</code> into your project. It targets <strong>.NET Framework 4.8+</strong> and uses
+            <code>System.Net.WebClient</code>.
+        </p>
+
+        <h4>3. Initialize &amp; Authenticate</h4>
+        <pre><code>// ── Your credentials (already filled in the downloaded file) ──
+var SKYLINEApp = new SKYLINE.api(
+    name:    "{{ app.name }}",
+    ownerid: "{{ app.owner_id }}",
+    secret:  "{{ app.secret_key }}",
+    version: "{{ app.version if app.version else '1.0' }}"
+);
+
+// ── Initialize (call once at startup) ──
+SKYLINEApp.init();
+
+// ── Login with username + password ──
+SKYLINEApp.login("username", "password");
+if (SKYLINEApp.response.success)
+    Console.WriteLine("Welcome, " + SKYLINEApp.user_data.username);
+else
+    Console.WriteLine("Error: " + SKYLINEApp.response.message);
+
+// ── Register with a license key ──
+SKYLINEApp.register("username", "password", "LICENSE-KEY");
+
+// ── License-only login (no username/password) ──
+SKYLINEApp.license("LICENSE-KEY");
+if (SKYLINEApp.response.success)
+    Console.WriteLine("Authenticated!");</code></pre>
+
+        <h4>4. Point to Your Server</h4>
+        <p style="color:var(--text-muted);">
+            The downloaded SDK already points to <code>{{ api_url }}/</code> — no manual changes needed.
+        </p>
+    </div>
+</div>
+
+<style>
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .detail-item {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-item label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-item label i {
+        margin-right: 0.5rem;
+        color: var(--primary);
+    }
+
+    .detail-value {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1rem;
+        color: var(--text-light);
+    }
+
+    .mono-text {
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.9rem;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        word-break: break-all;
+    }
+
+    .secret-key {
+        max-width: 280px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sdk-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    .sdk-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        min-width: 160px;
+    }
+
+    .sdk-btn i {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .sdk-btn span {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .sdk-btn small {
+        opacity: 0.7;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .sdk-btn.python {
+        background: linear-gradient(135deg, #3776AB, #FFD43B);
+        color: #fff;
+    }
+
+    .sdk-btn.csharp {
+        background: linear-gradient(135deg, #68217A, #953DAC);
+        color: #fff;
+    }
+
+    .sdk-btn.cpp {
+        background: linear-gradient(135deg, #00599C, #004482);
+        color: #fff;
+    }
+
+    .sdk-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .quick-start-content {
+        padding: 1.5rem;
+    }
+
+    .quick-start-content h4 {
+        color: var(--primary);
+        margin: 1.25rem 0 0.5rem;
+    }
+
+    .quick-start-content h4:first-child {
+        margin-top: 0;
+    }
+
+    .quick-start-content p {
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-start-content pre {
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin-top: 1rem;
+    }
+
+    .quick-start-content code {
+        font-family: 'Fira Code', 'Consolas', monospace;
+        font-size: 0.9rem;
+        color: #a5d6ff;
+    }
+</style>
+{% endblock %}

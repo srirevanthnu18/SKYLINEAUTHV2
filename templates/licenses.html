@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Licenses{% endblock %}
+{% block page_title %}License Key Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-key"></i> Generate License Keys</h3>
+    </div>
+    <form method="POST" action="{{ url_for('users.create') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Application</label>
+                <select name="app_id" class="form-control" required>
+                    <option value="">Select App</option>
+                    {% for app in apps %}
+                    <option value="{{ app._id }}">{{ app.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Package</label>
+                <select name="package_id" class="form-control" required>
+                    <option value="">Select Package</option>
+                    {% for pkg in packages %}
+                    <option value="{{ pkg._id }}">{{ pkg.name }} ({{ pkg.duration_days }}d)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Amount to Generate</label>
+                <input type="number" name="count" class="form-control" value="1" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label>Custom Days (Optional)</label>
+                <input type="number" name="custom_days" class="form-control" placeholder="Default" min="1">
+            </div>
+            <div class="form-group">
+                <label>Custom Key (Optional)</label>
+                <input type="text" name="username" class="form-control" placeholder="Prefix or Full Key">
+                <small class="text-muted">Used as the license key</small>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-magic"></i> Generate Keys</button>
+    </form>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> Active Licenses</h3>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>License Key</th>
+                    <th>App</th>
+                    <th>Package</th>
+                    <th>Created By</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><code>{{ user.key }}</code></td>
+                    <td>{{ user.app_name }}</td>
+                    <td>{{ user.package_name }}</td>
+                    <td>{{ user.creator_username }}</td>
+                    <td>{{ user.expiry.strftime('%Y-%m-%d') if user.expiry else 'Lifetime' }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-active' if user.is_active else 'badge-inactive' }}">
+                            {{ 'Active' if user.is_active else 'Banned' }}
+                        </span>
+                    </td>
+                    <td class="table-actions">
+                        <form method="POST" action="{{ url_for('users.delete', user_id=user._id) }}"
+                            onsubmit="return confirm('Delete this license?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Credentials Modal -->
+{% if session.get('created_credentials') %}
+<div class="modal-overlay" id="credentialsModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Created Credentials</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% set creds = session.pop('created_credentials') %}
+            <div class="creds-info">
+                <p><strong>App:</strong> {{ creds.app }}</p>
+                <p><strong>Package:</strong> {{ creds.package }}</p>
+                <p><strong>Valid Until:</strong> {{ creds.expiry }}</p>
+                <p><strong>Created By:</strong> {{ creds.created_by }}</p>
+            </div>
+            <hr>
+            {% for user in creds.users %}
+            <div class="cred-item">
+                <div class="cred-row">
+                    <label>Username/Key:</label>
+                    <div class="cred-value">
+                        <input type="text" id="key-{{ loop.index }}" value="{{ user.key }}" readonly>
+                        <button class="btn btn-sm btn-outline" onclick="copyField('key-{{ loop.index }}')"><i
+                                class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                {% if not user.is_license %}
+                <div class="cred-row">
+                    <label>Password:</label>
+                    <div class="cred-value">
+                        <input type="text" id="pass-{{ loop.index }}" value="{{ user.password }}" readonly>
+                        <button class="btn btn-sm btn-outline" onclick="copyField('pass-{{ loop.index }}')"><i
+                                class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% if not loop.last %}
+            <hr>{% endif %}
+            {% endfor %}
+            <div style="margin-top:15px;">
+                <button class="btn btn-success btn-block" onclick="copyAll()">
+                    <i class="fas fa-clipboard"></i> Copy All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-box {
+        background: #1a1a2e;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #333;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #fff;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: #ff4444;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .creds-info {
+        background: #0f0f1a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .creds-info p {
+        margin: 5px 0;
+        color: #ccc;
+    }
+
+    .cred-item {
+        margin: 10px 0;
+    }
+
+    .cred-row {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+        gap: 10px;
+    }
+
+    .cred-row label {
+        min-width: 100px;
+        color: #888;
+    }
+
+    .cred-value {
+        display: flex;
+        flex: 1;
+        gap: 5px;
+    }
+
+    .cred-value input {
+        flex: 1;
+        background: #0f0f1a;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-family: monospace;
+    }
+</style>
+
+<script>
+    function closeModal() {
+        document.getElementById('credentialsModal').style.display = 'none';
+    }
+    function copyField(id) {
+        var input = document.getElementById(id);
+        input.select();
+        document.execCommand('copy');
+        alert('Copied: ' + input.value);
+    }
+    function copyAll() {
+        var modal = document.getElementById('credentialsModal');
+        var infoDiv = modal.querySelector('.creds-info');
+        var app = infoDiv.querySelector('p:nth-child(1)').textContent;
+        var pkg = infoDiv.querySelector('p:nth-child(2)').textContent;
+        var valid = infoDiv.querySelector('p:nth-child(3)').textContent;
+        var createdBy = infoDiv.querySelector('p:nth-child(4)').textContent;
+
+        var allCreds = '';
+        var keys = modal.querySelectorAll('[id^="key-"]');
+        for (var i = 0; i < keys.length; i++) {
+            var keyId = keys[i].id;
+            var index = keyId.split('-')[1];
+            var passInput = document.getElementById('pass-' + index);
+
+            allCreds += 'Key: ' + keys[i].value;
+            if (passInput) {
+                allCreds += '\nPassword: ' + passInput.value;
+            }
+            allCreds += '\n\n';
+        }
+        allCreds += app + '\n' + pkg + '\n' + valid + '\n' + createdBy;
+
+        navigator.clipboard.writeText(allCreds).then(function () {
+            alert('All credentials copied to clipboard!');
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}

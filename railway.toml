@@ -1,0 +1,18 @@
+# Railway deployment configuration
+# https://docs.railway.app/reference/railway-toml
+#
+# This file configures the FLASK web service.
+# The Discord bot is a SEPARATE Worker service in Railway pointing to this
+# same repo with start command: python discord_bot.py
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "gunicorn app:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[deploy.healthcheck]
+path = "/health"
+timeout = 30

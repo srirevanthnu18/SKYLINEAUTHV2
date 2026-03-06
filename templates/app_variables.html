@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Variables for {{ app.name }}{% endblock %}
+{% block page_title %}Application Variables{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to App
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-plus"></i> Create/Update Variable</h3>
+    </div>
+    <form method="POST" action="{{ url_for('apps_extra.create_variable', app_id=app._id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Variable Name (ID)</label>
+                <input type="text" name="varid" class="form-control" placeholder="e.g. download_link" required>
+            </div>
+            <div class="form-group">
+                <label>Variable Data</label>
+                <input type="text" name="vardata" class="form-control" placeholder="Value to store" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save"></i> Save Variable</button>
+    </form>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h3><i class="fas fa-tags"></i> Existing Variables</h3>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Data</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for varid, vardata in variables.items() %}
+                <tr>
+                    <td><code>{{ varid }}</code></td>
+                    <td>{{ vardata }}</td>
+                    <td class="table-actions">
+                        <form method="POST"
+                            action="{{ url_for('apps_extra.delete_variable', app_id=app._id, varid=varid) }}"
+                            onsubmit="return confirm('Delete this variable?')">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

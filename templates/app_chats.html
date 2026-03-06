@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Chat{% endblock %}
+{% block page_title %}Chat Channels{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Manage App
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-plus"></i> Create Channel</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form action="{{ url_for('apps_extra.create_chat', app_id=app._id) }}" method="POST"
+            style="display: flex; gap: 1rem; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Channel
+                    Name</label>
+                <input type="text" name="name" class="form-control" placeholder="Global" required>
+            </div>
+            <div style="width: 100px;">
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Delay
+                    (Sec)</label>
+                <input type="number" name="delay" class="form-control" value="1" min="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Channel</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-comments"></i> Active Channels</h3>
+    </div>
+    <div style="padding: 0; overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Post Delay</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if channels %}
+                {% for ch in channels %}
+                <tr>
+                    <td style="font-weight: 600;"><i class="fas fa-hashtag"></i> {{ ch.name }}</td>
+                    <td>{{ ch.delay }}s</td>
+                    <td>{{ ch.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td style="display: flex; gap: 0.5rem;">
+                        <a href="{{ url_for('apps_extra.view_chat', app_id=app._id, channel_name=ch.name) }}"
+                            class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                            <i class="fas fa-eye"></i> View Messages
+                        </a>
+                        <form action="{{ url_for('apps_extra.delete_chat', app_id=app._id, channel_id=ch._id) }}"
+                            method="POST" onsubmit="return confirm('Delete channel and all messages?')">
+                            <button type="submit" class="btn btn-danger"
+                                style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No chat channels found.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

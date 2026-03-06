@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Logs{% endblock %}
+{% block page_title %}Application Logs{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Manage App
+    </a>
+    <form action="{{ url_for('apps_extra.clear_logs', app_id=app._id) }}" method="POST"
+        onsubmit="return confirm('Are you sure you want to clear ALL logs? This cannot be undone.')">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Clear All Logs
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-history"></i> Recent Activity Logs</h3>
+    </div>
+    <div style="padding: 0; overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs %}
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">{{ log.timestamp.strftime('%Y-%m-%d
+                        %H:%M:%S') }}</td>
+                    <td style="font-weight: 600;">{{ log.username }}</td>
+                    <td>{{ log.action }}</td>
+                    <td class="mono-text">{{ log.ip }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No logs found for this application.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .mono-text {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}

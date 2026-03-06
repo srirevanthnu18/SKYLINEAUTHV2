@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}SKYLINE - Blacklists{% endblock %}
+{% block page_title %}Blacklists Management{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('apps.manage', app_id=app._id) }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Manage App
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-ban"></i> Add Blacklist</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form action="{{ url_for('apps_extra.add_blacklist', app_id=app._id) }}" method="POST"
+            style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Blacklist
+                    Item (IP or HWID)</label>
+                <input type="text" name="item" class="form-control" placeholder="Enter IP or HWID" required>
+            </div>
+            <div style="width: 150px;">
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Type</label>
+                <select name="type" class="form-control">
+                    <option value="hwid">HWID</option>
+                    <option value="ip">IP Address</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add to Blacklist</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> Active Blacklists</h3>
+    </div>
+    <div style="padding: 0; overflow-x: auto;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Added On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if blacklists %}
+                {% for bl in blacklists %}
+                <tr>
+                    <td class="mono-text">{{ bl.item }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-inactive' if bl.type == 'hwid' else 'badge-active' }}"
+                            style="background: rgba(255,107,107,0.1); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.2);">
+                            {{ bl.type | upper }}
+                        </span>
+                    </td>
+                    <td>{{ bl.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        <form action="{{ url_for('apps_extra.delete_blacklist', app_id=app._id, blacklist_id=bl._id) }}"
+                            method="POST" onsubmit="return confirm('Remove from blacklist?')">
+                            <button type="submit" class="btn btn-danger"
+                                style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No blacklists found for this application.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .mono-text {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
