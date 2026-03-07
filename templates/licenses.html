@@ -8,6 +8,7 @@
         <h3><i class="fas fa-key"></i> Generate License Keys</h3>
     </div>
     <form method="POST" action="{{ url_for('users.create') }}">
+        <input type="hidden" name="is_license" value="1">
         <div class="form-row">
             <div class="form-group">
                 <label>Application</label>
@@ -108,7 +109,7 @@
             {% for user in creds.users %}
             <div class="cred-item">
                 <div class="cred-row">
-                    <label>Username/Key:</label>
+                    <label>License Key:</label>
                     <div class="cred-value">
                         <input type="text" id="key-{{ loop.index }}" value="{{ user.key }}" readonly>
                         <button class="btn btn-sm btn-outline" onclick="copyField('key-{{ loop.index }}')"><i

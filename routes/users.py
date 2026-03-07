@@ -67,6 +67,7 @@ def create():
     hwid_lock = request.form.get('hwid_lock') == 'on'
     username = request.form.get('username', '').strip()
     password = request.form.get('password', '').strip()
+    is_license = request.form.get('is_license') == '1'
 
     if not app_id or not package_id:
         flash('Application and package are required.', 'error')
@@ -89,7 +90,8 @@ def create():
         app_id, package_id, str(admin['_id']),
         count=count, custom_days=days_val, hwid_lock=hwid_lock,
         username=username if username else None,
-        password=password if password else None
+        password=password if password else None,
+        is_license=is_license
     )
 
     if error:

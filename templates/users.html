@@ -181,7 +181,7 @@
             {% for user in creds.users %}
             <div class="cred-item">
                 <div class="cred-row">
-                    <label>Username/Key:</label>
+                    <label>{{ 'License Key:' if user.is_license else 'Username:' }}</label>
                     <div class="cred-value">
                         <input type="text" id="key-{{ loop.index }}" value="{{ user.key }}" readonly>
                         <button class="btn btn-sm btn-outline" onclick="copyField('key-{{ loop.index }}')"><i

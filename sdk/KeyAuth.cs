@@ -161,7 +161,7 @@ namespace SKYLINE
 
             var response = req(values_to_upload);
 
-            if (response == "SKYLINE_Invalid") {
+            if (response == "KeyAuth_Invalid") {
                 error("Application not found");
                 Environment.Exit(0);
             }

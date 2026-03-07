@@ -151,7 +151,8 @@ class Database:
                 'app_disabled_msg': "Application is currently disabled.",
                 'download_link': "",
                 'force_encryption': False, # Setting to False by default for easier initial testing
-                'session_expiry': 3600
+                'session_expiry': 3600,
+                'minHwid': 0
             }
             res = self.db.apps.insert_one(doc)
             return str(res.inserted_id)
@@ -164,7 +165,7 @@ class Database:
                 'name', 'version', 'is_active', 'is_paused', 
                 'hwid_check', 'vpn_block', 'hash_check', 
                 'app_disabled_msg', 'download_link', 
-                'force_encryption', 'session_expiry', 'server_hash'
+                'force_encryption', 'session_expiry', 'server_hash', 'minHwid'
             ]
             for field in allowed:
                 if field in data:
@@ -401,7 +402,7 @@ class Database:
 
     # ── App Users (end-users) management ─────────────────────────────
 
-    def create_user_direct(self, app_id, package_id, created_by, count=1, custom_days=None, hwid_lock=True, username=None, password=None):
+    def create_user_direct(self, app_id, package_id, created_by, count=1, custom_days=None, hwid_lock=True, username=None, password=None, is_license=True):
         if self.mode == 'mongo':
             admin = self.db.admins.find_one({'_id': self._to_id(created_by)})
             if not admin:
@@ -424,15 +425,20 @@ class Database:
             for i in range(count):
                 if username and i == 0:
                     key = username.strip()
-                    raw_password = password.strip() if password else secrets.token_urlsafe(8)
-                    is_license = False
+                    # If it's a license, password MUST be the key. If it's a user account, use provided password or random.
+                    if is_license:
+                        raw_password = key
+                    else:
+                        raw_password = password.strip() if password else secrets.token_urlsafe(8)
                 else:
                     key = f"SKYLINE-{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}"
-                    # For licenses, the password IS the key (standard KeyAuth behavior)
+                    # For generated licenses, the password IS the key
                     raw_password = key
                     is_license = True
-                if self.db.app_users.find_one({'key': key}):
-                    return None, f'Username/Key "{key}" already exists'
+                
+                if self.db.app_users.find_one({'app_id': self._to_id(app_id), 'key': key}):
+                    return None, f'License/User "{key}" already exists'
+                
                 self.db.app_users.insert_one({
                     'app_id': self._to_id(app_id),
                     'key': key,
@@ -444,6 +450,7 @@ class Database:
                     'created_by': self._to_id(created_by),
                     'created_at': self._now(),
                     'is_active': True,
+                    'is_license': bool(is_license)
                 })
                 created_users.append({'key': key, 'password': raw_password, 'is_license': is_license})
             if admin.get('role') != 'superadmin':
